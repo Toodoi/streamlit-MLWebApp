@@ -227,7 +227,7 @@ if option == 'Data set':
                  'skewed to the right. Segmenting by the target variable RainTomorrow, it looks like the lower the '
                  'evaporation is for a given day, the less likely it is to rain on the next day.')
 
-    st.image('EvapHist.png') ## The code created this png
+    st.image('EvapHist.PNG') ## The code created this png
     # # Evaporation histogram
     # df3 = df[df.Evaporation < 100]
     # fig = px.histogram(df3, x="Evaporation", color="RainTomorrow",
