@@ -27,7 +27,8 @@ def get_data():
     df.drop('Date', axis=1, inplace=True)
 
     # Scaling Features
-    numerical = ['Temp3pm', 'Cloud3pm', 'Pressure3pm', 'Humidity3pm', 'WindGustSpeed', 'Sunshine', 'Evaporation', 'Rainfall', 'MaxTemp', 'MinTemp']
+    numerical = ['Temp3pm', 'Cloud3pm', 'Pressure3pm', 'Humidity3pm', 'WindGustSpeed', 'Sunshine', 'Evaporation',
+                 'Rainfall', 'MaxTemp', 'MinTemp']
     df2 = df[numerical].copy()
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(df2)
@@ -99,9 +100,15 @@ df, scaled_features = get_data()
 option = st.sidebar.selectbox("Page navigation", ('Home Page', 'Data set', 'Model'))
 
 if option == 'Home Page':
-    st.subheader('People have attempted to predict the weather informally for millennia and formally since the 19th century. The Australian state of New South Wales was recently hit with its worse rain event in three decades after extreme and sustained rain led to major flooding.')
-    st.subheader('This webapp investigates a weather data set produced by the Bureau of Meteorology and hosts a Random Forest model which has been trained on the data to predict whether it will rain on a given day. The model is interactive and allows users to adjust the hyperparameters to see how they affect the accuracy.')
-    st.markdown('Use the page navigation on the left sidebar to learn about the data set and explore its features or jump straight to the model section.')
+    st.subheader('People have attempted to predict the weather informally for millennia and formally since the 19th '
+                 'century. The Australian state of New South Wales was recently hit with its worse rain event in three '
+                 'decades after extreme and sustained rain led to major flooding.')
+    st.subheader('This webapp investigates a weather data set produced by the Bureau of Meteorology and hosts a Random '
+                 'Forest model which has been trained on the data to predict whether it will rain on a given day. The '
+                 'model is interactive and allows users to adjust the hyperparameters to see how they affect the '
+                 'accuracy.')
+    st.markdown('Use the page navigation on the left sidebar to learn about the data set and explore its features or '
+                'jump straight to the model section.')
     st.markdown('The data set was sourced from Kaggle [here](https://www.kaggle.com/jsphyg/weather-dataset-rattle-package).')
 
     st.image('https://images.scribblelive.com/2021/3/22/1bc1dccb-dab7-4d6d-8096-8f2aed7866ef.jpg',
@@ -112,14 +119,10 @@ if option == 'Home Page':
                 'visit my [Github page](https://github.com/Toodoi) for the Python sourcecode.')
 
 if option == 'Model':
-    st.header('Random Forest Model')
-    st.text('I found this dataset on Kaggle.com')
+    st.header('Tuning the model')
 
-
-    st.header('Time to train the model')
-    st.text('Here you get to choose the hyperparameters of the model and see how performance changes')
-    st.text('Adding more trees and allowing them to use more data will increase the time it takes to generate.')
-    st.text('It may take some time to receive a response when you max these settings.')
+    st.subheader('On this page you can set the model\'s hyperparameters and see how performance changes for different '
+                 'settings. The more trees and data you use, the longer it will take the model to load.')
 
     sel_col, disp_col = st.beta_columns(2)
 
@@ -141,30 +144,25 @@ if option == 'Model':
 
     graph_preds = np.stack([tree.predict(X_test) for tree in rfm.estimators_])
 
-    fig, ax = plt.subplots()
-    gy = [accuracy_score(y_test, np.where(graph_preds[:i + 1].mean(0) > 0.5, 1, 0)) for i in range(n_estimators)]
-    gx = range(1, n_estimators+1)
-    ax.plot(gx, gy, marker='s')
-    ax.set_xticks(gx)
-    ax.set_xticklabels(gx)
-    plt.xlabel('Number of Trees')
-    plt.ylabel('Model Accuracy (%)')
-    plt.title('Model Accuracy vs Number of Trees in Forest')
+    gy = [round(accuracy_score(y_test, np.where(graph_preds[:i + 1].mean(0) > 0.5, 1, 0)), 3)*100 for i in range(n_estimators)]
+    gx = list(range(1, n_estimators + 1))
+    fig = go.Figure(data=go.Scatter(x=gx, y=gy))
+    fig.update_xaxes(tickmode='linear', tick0=1, dtick=1)
+    fig.update_layout(margin=dict(l=25, r=50, b=10, t=25), paper_bgcolor='#F5F5F5', xaxis_title='Number of Trees',
+                      yaxis_title='Model Accuracy(%)', title='Model Accuracy vs Number of Trees in Forest')
 
     if n_estimators > 1:
-        st.pyplot(fig=fig)
+        st.subheader('More trees typically means a better performance for the model because each tree is trained on '
+                     'a slightly different set of data and features to find patterns in the data set.')
+        st.plotly_chart(fig)
+
 
     def rf_feat_importance(m, df):
         return pd.DataFrame({'Feature': list(df.columns), 'Importance (%)': np.round(m.feature_importances_*100, 1)}
                             ).sort_values('Importance (%)', ascending=False)
     fi = rf_feat_importance(rfm, X_test)
     fi = fi.head(8)
-    # fig = go.Figure(data=go.Table(columnwidth=[300,100], header=dict(values=list(fi.columns),
-    #                 fill_color='#FD8E72',
-    #                 align='center'),
-    #                 cells=dict(values=[fi['Feature'], fi['Importance (%)']], fill_color='#E5ECF6', align='center')))
-    # fig.update_layout(margin=dict(l=5,r=5,b=10,t=10), paper_bgcolor='#F5F5F5')
-    # st.plotly_chart(fig)
+
     st.subheader("Feature importance scores tell us which features in the data set are most important in predicting "
                  "the target feature. In this data set Humidity3pm consistently scores very high.")
     x = [feature[0] for feature in fi['Feature']]
